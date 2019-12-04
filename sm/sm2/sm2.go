@@ -10,9 +10,10 @@ import (
 	"crypto/elliptic"
 	"encoding/asn1"
 	"errors"
-	"github.com/flyinox/crypto/sm/sm3"
 	"io"
 	"math/big"
+
+	"github.com/wanghongxing/crypto/sm/sm3"
 )
 
 type PublicKey struct {
@@ -29,7 +30,7 @@ type sm2Signature struct {
 	R, S *big.Int
 }
 
-var generateRandK  = _generateRandK
+var generateRandK = _generateRandK
 
 // The SM2's private key contains the public key
 func (priv *PrivateKey) Public() crypto.PublicKey {
@@ -98,9 +99,9 @@ func _generateRandK(rand io.Reader, c elliptic.Curve) (k *big.Int) {
 	return
 }
 
-func getZById(pub *PublicKey, id []byte) []byte{
+func getZById(pub *PublicKey, id []byte) []byte {
 	var lena = uint16(len(id) * 8) //bit len of IDA
-	var ENTLa = []byte{byte(lena>>8), byte(lena)}
+	var ENTLa = []byte{byte(lena >> 8), byte(lena)}
 	var z = make([]byte, 0, 1024)
 
 	z = append(z, ENTLa...)
@@ -113,6 +114,7 @@ func getZById(pub *PublicKey, id []byte) []byte{
 	z = append(z, pub.Y.Bytes()...)
 	return sm3.SumSM3(z)
 }
+
 //Za = sm3(ENTL||IDa||a||b||Gx||Gy||Xa||Xy)
 func getZ(pub *PublicKey) []byte {
 	return getZById(pub, []byte("1234567812345678"))
@@ -154,7 +156,7 @@ func Sign(rand io.Reader, priv *PrivateKey, msg []byte) (r, s *big.Int, err erro
 	return
 }
 
-func VerifyById(pub *PublicKey, msg,id []byte, r, s *big.Int) bool {
+func VerifyById(pub *PublicKey, msg, id []byte, r, s *big.Int) bool {
 	c := pub.Curve
 	N := c.Params().N
 

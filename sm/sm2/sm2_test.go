@@ -11,11 +11,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/flyinox/crypto/sm/sm3"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/wanghongxing/crypto/sm/sm3"
 )
 
 func TestSignVerify(t *testing.T) {
@@ -39,22 +40,22 @@ func TestSignVerify(t *testing.T) {
 }
 
 func TestBase(t *testing.T) {
-	msg := []byte{1,2,3,4}
+	msg := []byte{1, 2, 3, 4}
 	priv, err := GenerateKey(rand.Reader)
 	if err != nil {
 		panic("GenerateKey failed")
 	}
-	fmt.Printf("D:%s\n" , priv.D.Text(16))
-	fmt.Printf("X:%s\n" , priv.X.Text(16))
-	fmt.Printf("Y:%s\n" , priv.Y.Text(16))
+	fmt.Printf("D:%s\n", priv.D.Text(16))
+	fmt.Printf("X:%s\n", priv.X.Text(16))
+	fmt.Printf("Y:%s\n", priv.Y.Text(16))
 
 	hfunc := sm3.New()
 	hfunc.Write(msg)
 	hash := hfunc.Sum(nil)
 	fmt.Printf("hash:%02X\n", hash)
-	var done  = make(chan struct{})
-	go func(){
-		for i:=0;;i+=1 {
+	var done = make(chan struct{})
+	go func() {
+		for i := 0; ; i += 1 {
 			sig, err := priv.Sign(rand.Reader, hash, nil)
 			if err != nil {
 				panic(err)
@@ -75,15 +76,13 @@ func TestBase(t *testing.T) {
 		panic(err)
 	}
 
-	fmt.Printf("R:%s\n" , r.Text(16))
-	fmt.Printf("S:%s\n" , s.Text(16))
-
+	fmt.Printf("R:%s\n", r.Text(16))
+	fmt.Printf("S:%s\n", s.Text(16))
 
 	ret := Verify(&priv.PublicKey, hash, r, s)
 	fmt.Println(ret)
 	<-done
 }
-
 
 func TestKeyGeneration(t *testing.T) {
 	priv, err := GenerateKey(rand.Reader)
@@ -100,7 +99,7 @@ func TestKeyGeneration(t *testing.T) {
 func BenchmarkSign(b *testing.B) {
 	b.ResetTimer()
 	origin := []byte("testing")
-	hashed  := sm3.SumSM3(origin)
+	hashed := sm3.SumSM3(origin)
 	priv, _ := GenerateKey(rand.Reader)
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -137,15 +136,15 @@ func TestSignAndVerify(t *testing.T) {
 }
 
 func TestKDF(t *testing.T) {
-	x2,err := hex.DecodeString("64D20D27D0632957F8028C1E024F6B02EDF23102A566C932AE8BD613A8E865FE")
+	x2, err := hex.DecodeString("64D20D27D0632957F8028C1E024F6B02EDF23102A566C932AE8BD613A8E865FE")
 	if err != nil {
 		t.Fatalf("%s", err.Error())
 	}
-	y2,err := hex.DecodeString("58D225ECA784AE300A81A2D48281A828E1CEDF11C4219099840265375077BF78")
+	y2, err := hex.DecodeString("58D225ECA784AE300A81A2D48281A828E1CEDF11C4219099840265375077BF78")
 	if err != nil {
 		t.Fatalf("%s", err.Error())
 	}
-	expect,err := hex.DecodeString("006E30DAE231B071DFAD8AA379E90264491603")
+	expect, err := hex.DecodeString("006E30DAE231B071DFAD8AA379E90264491603")
 	klen := 152
 	actual := keyDerivation(append(x2, y2...), klen)
 	assert.Equal(t, expect, actual)
@@ -163,28 +162,27 @@ func TestENC_GMT_EX1(t *testing.T) {
 
 	p256sm2CurveTest := p256Curve{p256Sm2ParamsTest}
 
-	generateRandK = func (rand io.Reader, c elliptic.Curve) (k *big.Int) {
-		k,_ =  new(big.Int).SetString("4C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F", 16)
+	generateRandK = func(rand io.Reader, c elliptic.Curve) (k *big.Int) {
+		k, _ = new(big.Int).SetString("4C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F", 16)
 		return k
 	}
-	expectA,_ := new(big.Int).SetString("787968B4FA32C3FD2417842E73BBFEFF2F3C848B6831D7E0EC65228B3937E498", 16)
-	Gy2 := p256sm2CurveTest.Gy.Mul(p256sm2CurveTest.Gy,p256sm2CurveTest.Gy)
+	expectA, _ := new(big.Int).SetString("787968B4FA32C3FD2417842E73BBFEFF2F3C848B6831D7E0EC65228B3937E498", 16)
+	Gy2 := p256sm2CurveTest.Gy.Mul(p256sm2CurveTest.Gy, p256sm2CurveTest.Gy)
 	gx := new(big.Int).SetBytes(p256sm2CurveTest.Gx.Bytes())
-	Gx2 := gx.Mul(p256sm2CurveTest.Gx,p256sm2CurveTest.Gx)
-	Gx3 := gx.Mul(Gx2,p256sm2CurveTest.Gx)
-	A := Gy2.Sub(Gy2,Gx3)
-	A = A.Sub(A,p256sm2CurveTest.B)
-	A = A.Div(A,p256sm2CurveTest.Gx)
-	assert.Equal(t,expectA.Bytes(), A.Bytes())
+	Gx2 := gx.Mul(p256sm2CurveTest.Gx, p256sm2CurveTest.Gx)
+	Gx3 := gx.Mul(Gx2, p256sm2CurveTest.Gx)
+	A := Gy2.Sub(Gy2, Gx3)
+	A = A.Sub(A, p256sm2CurveTest.B)
+	A = A.Div(A, p256sm2CurveTest.Gx)
+	assert.Equal(t, expectA.Bytes(), A.Bytes())
 
-
-	expectX,_ := new(big.Int).SetString("435B39CCA8F3B508C1488AFC67BE491A0F7BA07E581A0E4849A5CF70628A7E0A", 16)
-	expectY,_ := new(big.Int).SetString("75DDBA78F15FEECB4C7895E2C1CDF5FE01DEBB2CDBADF45399CCF77BBA076A42", 16)
+	expectX, _ := new(big.Int).SetString("435B39CCA8F3B508C1488AFC67BE491A0F7BA07E581A0E4849A5CF70628A7E0A", 16)
+	expectY, _ := new(big.Int).SetString("75DDBA78F15FEECB4C7895E2C1CDF5FE01DEBB2CDBADF45399CCF77BBA076A42", 16)
 	priv := &PrivateKey{}
 	priv.PublicKey.Curve = p256sm2CurveTest
-	priv.D,_ = new(big.Int).SetString("1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0", 16)
-	priv.PublicKey.X,priv.PublicKey.Y = p256sm2CurveTest.ScalarBaseMult(priv.D.Bytes())
-	assert.True(t,p256sm2CurveTest.IsOnCurve(expectX,expectY))
+	priv.D, _ = new(big.Int).SetString("1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0", 16)
+	priv.PublicKey.X, priv.PublicKey.Y = p256sm2CurveTest.ScalarBaseMult(priv.D.Bytes())
+	assert.True(t, p256sm2CurveTest.IsOnCurve(expectX, expectY))
 
 	//assert.Equal(t, expectX.Bytes(), priv.PublicKey.X.Bytes())
 	//assert.Equal(t, expectY.Bytes(), priv.PublicKey.Y.Bytes())
@@ -192,15 +190,15 @@ func TestENC_GMT_EX1(t *testing.T) {
 
 func TestCryptoToolCompare(t *testing.T) {
 	generateRandK = func(rand io.Reader, c elliptic.Curve) (k *big.Int) {
-		k,_ = new(big.Int).SetString("88E0271D16363C00D6456E151C095BAD4B75968E708234A9762146711D327FF3", 16)
+		k, _ = new(big.Int).SetString("88E0271D16363C00D6456E151C095BAD4B75968E708234A9762146711D327FF3", 16)
 		return
 	}
 	priv := &PrivateKey{}
 	priv.PublicKey.Curve = P256Sm2()
-	priv.D,_ = new(big.Int).SetString("88E0271D16363C00D6456E151C095BAD4B75968E708234A9762146711D327FF3", 16)
-	priv.PublicKey.X,priv.PublicKey.Y = priv.PublicKey.ScalarBaseMult(priv.D.Bytes())
+	priv.D, _ = new(big.Int).SetString("88E0271D16363C00D6456E151C095BAD4B75968E708234A9762146711D327FF3", 16)
+	priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.ScalarBaseMult(priv.D.Bytes())
 
-	msg,_ := hex.DecodeString("88E0271D16363C00D6456E151C095BAD4B75968E708234A9762146711D327FF3")
+	msg, _ := hex.DecodeString("88E0271D16363C00D6456E151C095BAD4B75968E708234A9762146711D327FF3")
 	Encrypt(rand.Reader, msg, &priv.PublicKey)
 }
 
@@ -212,12 +210,12 @@ func TestEnc(t *testing.T) {
 	if err != nil {
 		t.Fatalf("encrypt failed : %s", err.Error())
 	}
-	dec,err := Decrypt(enc, priv)
+	dec, err := Decrypt(enc, priv)
 	if err != nil {
 		t.Fatalf("dec failed : %s", err.Error())
 	}
 
-	if !bytes.Equal([]byte(msg), dec){
+	if !bytes.Equal([]byte(msg), dec) {
 		t.Error("enc-dec failed")
 	}
 }
